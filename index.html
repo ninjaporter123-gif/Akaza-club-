@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AKAZA CLUB • VIP Official Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&family=Chakra+Petch:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            chakra: ['Chakra Petch', 'sans-serif'],
+          },
+          colors: {
+            brandOrange: '#f97316',
+            brandDarkOrange: '#ea580c',
+            bgDeepOrange: '#f56e08',
+            goldCoin: '#fbbf24',
+            winGreen: '#10b981',
+            winRed: '#ef4444',
+            winViolet: '#8b5cf6',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background: linear-gradient(180deg, #f97316 0%, #ea580c 40%, #c2410c 100%);
+      font-family: 'Outfit', sans-serif;
+      color: #334155;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .game-card-bg {
+      border-radius: 1.25rem;
+      box-shadow: 0 8px 20px -4px rgba(194, 65, 12, 0.4);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .game-card-bg:active { transform: scale(0.96); }
+    .ball {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      font-weight: 800;
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 10px rgba(0,0,0,0.3);
+      transition: transform 0.15s ease;
+    }
+    .ball:active { transform: scale(0.92); }
+    .ball-red { background: linear-gradient(135deg, #fb7185, #e11d48); color: white; }
+    .ball-green { background: linear-gradient(135deg, #34d399, #059669); color: white; }
+    .ball-violet-red { background: linear-gradient(135deg, #a855f7 50%, #e11d48 50%); color: white; }
+    .ball-violet-green { background: linear-gradient(135deg, #a855f7 50%, #059669 50%); color: white; }
+    .digit-box {
+      background: #ffffff;
+      color: #ea580c;
+      border-radius: 6px;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 -2px 0 rgba(0,0,0,0.15), 0 2px 5px rgba(0,0,0,0.25);
+    }
+    #wheelCanvas {
+      filter: drop-shadow(0 10px 15px rgba(0,0,0,0.4));
+      transition: transform 4s cubic-bezier(0.15, 0.9, 0.25, 1);
+    }
+    .wheel-pointer {
+      width: 0; 
+      height: 0; 
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 28px solid #fbbf24;
+      position: absolute;
+      top: -10px;
+      left: calc(50% - 14px);
+      z-index: 20;
+      filter: drop-shadow(0 4px 4px rgba(0,0,0,0.4));
+    }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+    ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-start min-h-screen p-2.5 sm:p-4 pb-24">
+
+  <!-- CINEMATIC SPLASH SCREEN -->
+  <div id="splashScreen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-orange-600 to-amber-700 transition-opacity duration-500">
+    <div class="flex flex-col items-center">
+      <div class="w-24 h-24 rounded-3xl bg-white shadow-2xl flex items-center justify-center text-5xl mb-3 animate-bounce">
+        👑
+      </div>
+      <h1 class="font-chakra text-3xl sm:text-4xl font-black tracking-widest text-white uppercase drop-shadow-md">
+        AKAZA CLUB
+      </h1>
+      <p class="font-mono text-xs text-amber-200 mt-1 uppercase tracking-widest font-bold">Official VIP Gaming Hub</p>
+      <div class="w-40 bg-black/30 h-1.5 rounded-full overflow-hidden mt-6">
+        <div id="splashBar" class="h-full bg-white transition-all duration-300" style="width: 20%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTHENTICATION (REGISTER / LOGIN SCREEN) -->
+  <div id="authContainer" class="w-full max-w-md my-auto flex flex-col gap-3 relative z-40 hidden">
+    <!-- PROFILE BANNER -->
+    <div class="w-full rounded-3xl overflow-hidden shadow-2xl bg-gradient-to-br from-amber-300 via-orange-500 to-amber-700 p-5 text-white border-2 border-white/30 relative">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-16 h-16 rounded-2xl bg-white/25 backdrop-blur-md border border-white/40 flex items-center justify-center text-3xl shadow-inner">
+            👑
+          </div>
+          <div>
+            <span class="text-[10px] font-black uppercase tracking-widest bg-white/90 text-orange-700 px-2.5 py-0.5 rounded-full font-mono">Official VIP Lounge</span>
+            <h2 class="font-chakra text-2xl font-black tracking-wider uppercase mt-1 drop-shadow">
+              AKAZA CLUB
+            </h2>
+            <p class="text-[11px] text-amber-100 font-medium">Register & login to start winning</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-3xl p-6 shadow-2xl">
+      <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl mb-4 font-bold text-xs">
+        <button onclick="switchAuthTab('REGISTER')" id="btnAuthRegister" class="py-2.5 rounded-xl bg-orange-500 text-white shadow">Register</button>
+        <button onclick="switchAuthTab('LOGIN')" id="btnAuthLogin" class="py-2.5 rounded-xl text-slate-500">Login</button>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <form id="formRegister" onsubmit="handleRegister(event)" class="flex flex-col gap-3">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Mobile Phone Number</label>
+          <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
+            <span class="text-orange-500 font-bold mr-2 text-xs">+91</span>
+            <input id="regPhone" type="tel" maxlength="10" placeholder="10 Digit Phone Number" required class="w-full bg-transparent text-xs font-mono text-slate-700 outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Set Password</label>
+          <input id="regPassword" type="password" placeholder="Create Password" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-mono text-slate-700 outline-none">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Invitation Code</label>
+          <input id="regInvite" type="text" placeholder="Invite Code" value="AKZ777" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-mono text-orange-600 font-bold outline-none">
+        </div>
+        <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider transition shadow-lg mt-1">
+          Create Account & Enter
+        </button>
+      </form>
+
+      <!-- LOGIN FORM -->
+      <form id="formLogin" onsubmit="handleLogin(event)" class="flex flex-col gap-3 hidden">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Mobile Phone Number</label>
+          <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5">
+            <span class="text-orange-500 font-bold mr-2 text-xs">+91</span>
+            <input id="loginPhone" type="tel" maxlength="10" placeholder="Registered Number" required class="w-full bg-transparent text-xs font-mono text-slate-700 outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Password</label>
+          <input id="loginPassword" type="password" placeholder="Enter Password" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-mono text-slate-700 outline-none">
+        </div>
+        <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:brightness-110 text-white font-black text-xs uppercase tracking-wider transition shadow-lg mt-1">
+          Log In
+        </button>
+      </form>
+
+      <div class="mt-3 text-center border-t border-slate-100 pt-3">
+        <button onclick="playAsGuest()" class="text-xs font-mono text-slate-500 hover:text-orange-600 font-bold">
+          ⚡ Continue as Guest (Trial Mode) ›
+        </button>
+      </div>
+
+      <p id="authMsg" class="text-xs font-bold text-center mt-3 hidden"></p>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="mainAppContainer" class="w-full max-w-md flex flex-col gap-3.5 hidden">
+    <!-- HOME VIEW -->
+    <div id="viewHomeArena" class="flex flex-col gap-3.5">
+      <div class="flex items-center justify-between py-1 px-1">
+        <span class="font-chakra text-2xl font-black text-white tracking-wide">AKAZA CLUB</span>
+        <div class="flex items-center gap-2">
+          <div id="topAuthButton" class="hidden">
+            <button onclick="openAuthModal()" class="px-3 py-1 rounded-full bg-white text-orange-600 font-bold text-xs shadow-md">
+              Login / Reg
+            </button>
+          </div>
+          <div class="bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-white/20 text-white font-mono text-xs font-bold">
+            <span class="text-amber-300">🪙</span>
+            <span id="homeWalletDisplay">0.00</span>
+            <span onclick="openDepositModal()" class="w-4 h-4 rounded-full bg-orange-500 text-white flex items-center justify-center text-[10px] ml-1 cursor-pointer">+</span>
+          </div>
+          <div onclick="switchBottomNav('PROFILE')" class="w-9 h-9 rounded-full border-2 border-white/80 overflow-hidden cursor-pointer shadow-md bg-white flex items-center justify-center text-lg">
+            👸
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-white px-1">
+        <div class="flex items-center gap-1.5 font-bold text-sm tracking-wide">
+          <span>🎰</span> <span>Lottery</span>
+        </div>
+        <span class="text-[11px] font-bold bg-white/20 px-2.5 py-0.5 rounded-full">All Games ›</span>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2.5">
+        <div onclick="openLiveBetArena('30S')" class="game-card-bg bg-gradient-to-b from-rose-100 to-rose-200 border-2 border-rose-300 p-2.5 flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+          <div class="w-14 h-14 rounded-full ball-red text-xl font-black flex items-center justify-center shadow-lg my-1">1</div>
+          <span class="text-xs font-black text-rose-600 mt-1">Wingo 30S</span>
+          <span class="text-[9px] font-bold text-slate-500">WINGO 30SEC</span>
+        </div>
+        <div onclick="openLiveBetArena('1M')" class="game-card-bg bg-gradient-to-b from-amber-100 to-amber-200 border-2 border-amber-300 p-2.5 flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+          <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-300 text-slate-900 text-xl font-black flex items-center justify-center shadow-lg my-1">1</div>
+          <span class="text-xs font-black text-amber-700 mt-1">Wingo 1Min</span>
+          <span class="text-[9px] font-bold text-slate-500">WINGO 1 MIN</span>
+        </div>
+        <div onclick="openLiveBetArena('3M')" class="game-card-bg bg-gradient-to-b from-emerald-100 to-emerald-200 border-2 border-emerald-300 p-2.5 flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+          <div class="w-14 h-14 rounded-full ball-green text-xl font-black flex items-center justify-center shadow-lg my-1">1</div>
+          <span class="text-xs font-black text-emerald-700 mt-1">Wingo 3Min</span>
+          <span class="text-[9px] font-bold text-slate-500">WINGO 3 MIN</span>
+        </div>
+        <div onclick="openLiveBetArena('5M')" class="game-card-bg bg-gradient-to-b from-blue-100 to-blue-200 border-2 border-blue-300 p-2.5 flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+          <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 text-white text-xl font-black flex items-center justify-center shadow-lg my-1">1</div>
+          <span class="text-xs font-black text-blue-700 mt-1">Wingo 5Min</span>
+          <span class="text-[9px] font-bold text-slate-500">WINGO 5 MIN</span>
+        </div>
+        <div onclick="alert('K3 Dice coming soon!')" class="game-card-bg bg-gradient-to-b from-orange-100 to-orange-200 border-2 border-orange-300 p-2.5 flex flex-col items-center text-center cursor-pointer">
+          <div class="text-3xl my-2">🎲</div>
+          <span class="text-xs font-black text-orange-700 mt-1">K3 1Min</span>
+          <span class="text-[9px] font-bold text-slate-500">DICE 1 MIN</span>
+        </div>
+        <div onclick="alert('Moto Racing coming soon!')" class="game-card-bg bg-gradient-to-b from-slate-100 to-slate-200 border-2 border-slate-300 p-2.5 flex flex-col items-center text-center cursor-pointer">
+          <div class="text-3xl my-2">🏍️</div>
+          <span class="text-xs font-black text-slate-700 mt-1">Moto Racing</span>
+          <span class="text-[9px] font-bold text-slate-500">RACE SIM</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5 mt-1">
+        <div onclick="switchBottomNav('PROMO')" class="bg-white rounded-2xl p-3 shadow-lg flex flex-col justify-between cursor-pointer border border-orange-200">
+          <div>
+            <span class="text-[9px] font-black text-orange-500 uppercase tracking-widest bg-orange-100 px-2 py-0.5 rounded-full">Invite & Earn</span>
+            <h4 class="text-xs font-bold text-slate-800 mt-1.5">0.10% Lifetime Bet Commission</h4>
+          </div>
+          <div class="flex items-center justify-between mt-3 text-orange-600 font-bold text-xs">
+            <span>Invite Now</span> <span>›</span>
+          </div>
+        </div>
+
+        <div onclick="openSpinWheelModal()" class="bg-white rounded-2xl p-3 shadow-lg flex flex-col justify-between cursor-pointer border border-amber-200">
+          <div>
+            <span class="text-[9px] font-black text-amber-600 uppercase tracking-widest bg-amber-100 px-2 py-0.5 rounded-full">Deposit Wheel</span>
+            <h4 class="text-xs font-bold text-slate-800 mt-1.5">₹1000 Deposit = 1 Spin</h4>
+          </div>
+          <div class="flex items-center justify-between mt-3 text-amber-600 font-bold text-xs">
+            <span>Spin Fortune</span> <span>🎡</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE ARENA VIEW -->
+    <div id="viewLiveArena" class="flex flex-col gap-3 hidden">
+      <div class="flex items-center justify-between text-white">
+        <button onclick="closeLiveBetArena()" class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg">‹</button>
+        <span id="arenaTitle" class="font-bold text-base">WinGo 1 Min Live</span>
+        <div class="w-8"></div>
+      </div>
+
+      <div class="bg-white text-slate-800 rounded-3xl p-4 shadow-xl flex items-center justify-between">
+        <div class="max-w-[65%] overflow-hidden">
+          <span class="text-[10px] font-bold text-orange-600 uppercase tracking-wider block">Target Period</span>
+          <span id="currentPeriodDisplay" class="font-mono text-xs sm:text-sm font-black text-slate-900 block truncate">#202610211000...</span>
+          <div id="miniBallPreview" class="flex gap-1.5 mt-2"></div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Time Left</span>
+          <div class="flex items-center gap-1 font-mono">
+            <span id="timerMin1" class="digit-box w-5 h-7 sm:w-6 sm:h-8 text-sm">0</span>
+            <span id="timerMin2" class="digit-box w-5 h-7 sm:w-6 sm:h-8 text-sm">0</span>
+            <span class="font-bold text-slate-400">:</span>
+            <span id="timerSec1" class="digit-box w-5 h-7 sm:w-6 sm:h-8 text-sm">3</span>
+            <span id="timerSec2" class="digit-box w-5 h-7 sm:w-6 sm:h-8 text-sm">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl p-4 shadow-xl flex flex-col gap-3">
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="selectBetTarget('COLOR', 'Green', 2.0)" class="py-2.5 rounded-xl bg-winGreen font-bold text-sm shadow text-white">Green (x2)</button>
+          <button onclick="selectBetTarget('COLOR', 'Violet', 4.5)" class="py-2.5 rounded-xl bg-winViolet font-bold text-sm shadow text-white">Violet (x4.5)</button>
+          <button onclick="selectBetTarget('COLOR', 'Red', 2.0)" class="py-2.5 rounded-xl bg-winRed font-bold text-sm shadow text-white">Red (x2)</button>
+        </div>
+
+        <div class="grid grid-cols-5 gap-2.5 justify-items-center py-2 bg-slate-50 rounded-2xl p-2 border border-slate-100">
+          <div onclick="selectBetTarget('NUMBER', 0, 9.0)" class="ball ball-violet-red w-11 h-11 text-base cursor-pointer">0</div>
+          <div onclick="selectBetTarget('NUMBER', 1, 9.0)" class="ball ball-green w-11 h-11 text-base cursor-pointer">1</div>
+          <div onclick="selectBetTarget('NUMBER', 2, 9.0)" class="ball ball-red w-11 h-11 text-base cursor-pointer">2</div>
+          <div onclick="selectBetTarget('NUMBER', 3, 9.0)" class="ball ball-green w-11 h-11 text-base cursor-pointer">3</div>
+          <div onclick="selectBetTarget('NUMBER', 4, 9.0)" class="ball ball-red w-11 h-11 text-base cursor-pointer">4</div>
+          <div onclick="selectBetTarget('NUMBER', 5, 9.0)" class="ball ball-violet-green w-11 h-11 text-base cursor-pointer">5</div>
+          <div onclick="selectBetTarget('NUMBER', 6, 9.0)" class="ball ball-red w-11 h-11 text-base cursor-pointer">6</div>
+          <div onclick="selectBetTarget('NUMBER', 7, 9.0)" class="ball ball-green w-11 h-11 text-base cursor-pointer">7</div>
+          <div onclick="selectBetTarget('NUMBER', 8, 9.0)" class="ball ball-red w-11 h-11 text-base cursor-pointer">8</div>
+          <div onclick="selectBetTarget('NUMBER', 9, 9.0)" class="ball ball-green w-11 h-11 text-base cursor-pointer">9</div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="selectBetTarget('SIZE', 'Big', 2.0)" class="py-3 rounded-xl bg-orange-500 font-black text-base shadow text-white">BIG [ 5 - 9 ]</button>
+          <button onclick="selectBetTarget('SIZE', 'Small', 2.0)" class="py-3 rounded-xl bg-blue-500 font-black text-base shadow text-white">SMALL [ 0 - 4 ]</button>
+        </div>
+
+        <div id="betStatusBar" class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-mono">
+          <span id="betStatusText" class="text-slate-500">Select any Color, Number, or Big/Small.</span>
+          <span id="stakeSummary" class="font-bold text-orange-600"></span>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl p-4 shadow-xl">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
+          <div class="flex gap-2">
+            <button onclick="switchHistoryTab('LIVE')" id="tabBtnLive" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-orange-500 text-white shadow">Live History</button>
+      
